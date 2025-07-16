@@ -123,8 +123,6 @@ export const getAllFriends  = async(req,res) => {
         }).populate("receiver sender");
         
 
-        //const receivedRequests = await FriendRequests.find({ receiver: userId, status: "pending" }).populate("sender");
-
         const friendList = friends.map(friend => {
             return friend.sender._id.toString() === userId ? friend.receiver : friend.sender;
         });
@@ -156,8 +154,6 @@ export const getAllRequests  = async(req,res) => {
             })
         }
 
-        // const friends = await FriendRequests.find({sender:userId,status : "accepted"}).populate("receiverId");
-
         const receivedRequests = await FriendRequests.find({ receiver: userId, status: "pending" }).populate("sender");
 
 
@@ -188,8 +184,6 @@ export const getAllSentRequests  = async(req,res) => {
             })
         }
 
-        // const friends = await FriendRequests.find({sender:userId,status : "accepted"}).populate("receiverId");
-
         const sentRequests = await FriendRequests.find({ sender: userId, status: "pending" }).populate("receiver");
 
 
@@ -209,47 +203,30 @@ export const getAllSentRequests  = async(req,res) => {
 }
 
 
-
-//export const getRandomUsers = async(req,res) => {
-//     try{
-//         const userId = req.user.id;
-
-//     }catch(error){
-//         console.log(error);
-//         return res.status(500).json({
-//             success : false,
-//             message : "Some error occurred while fetching users. Please try after sometime"
-//         })
-//     }
-// }
-
-
 export const getRandomUsers = async (req,res) => {
     try {
         const userId = req.user.id;
         
         console.log(userId,"USER");
-        // Step 1: Fetch all users excluding the current user
+        
         const users = await User.find({ _id: { $ne: userId } });
 
-        // Step 2: Fetch users that the current user has already sent friend requests to
+        
         const sentFriendRequests = await FriendRequests.find({
             sender: userId,
             status: {$in: ["pending", "accepted"]},
         }).select("receiver");
 
-        // Step 3: Filter out the users who already received friend requests from the current user
+        
         const sentRequestIds = sentFriendRequests.map((request) => request.receiver.toString());
 
         const randomUsers = users.filter(
             (user) => !sentRequestIds.includes(user._id.toString())
         );
-        //console.log("qrequests",sentRequestIds);
-        //console.log("RANDOM ",randomUsers);
 
         return res.status(200).json({
             success: true,
-            data: randomUsers, // List of users who the current user has not sent requests to
+            data: randomUsers,
             message: "Users fetched successfully",
         });
     } catch (error) {
